@@ -1,5 +1,38 @@
-// Interface Admin SaaS - Savour d'Afrique
-const socket = io();
+// URL backend Render
+const API_URL = "https://savour-backend-uhk1.onrender.com";
+
+// Connexion Socket.io vers Render
+const socket = io(API_URL);
+
+let menuData = [];
+let ordersData = [];
+let currentEditingId = null;
+
+// États de l'interface
+let currentSection = 'stocks';
+let isLoading = false;
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+    setupEventListeners();
+    setupSocketListeners();
+});
+
+function initializeApp() {
+    // Simuler connexion admin
+    document.getElementById('btn-login').addEventListener('click', () => {
+        document.getElementById('login-overlay').style.display = 'none';
+        loadDashboard();
+    });
+
+    // Charger les données initiales
+    loadMenu();
+    loadOrders();
+    loadStats();
+}
+/*// Interface Admin SaaS - Savour d'Afrique
+const socket = io(API_URL);
 let menuData = [];
 let ordersData = [];
 let currentEditingId = null;
@@ -26,7 +59,7 @@ function initializeApp() {
     loadMenu();
     loadOrders();
     loadStats();
-}
+}*/
 
 function setupEventListeners() {
     // Navigation
@@ -125,7 +158,7 @@ function loadDashboard() {
 async function loadMenu() {
     try {
         setLoading(true);
-        const response = await fetch('/api/menu');
+        const response = await fetch(`${API_URL}/api/menu`);
         menuData = await response.json();
         renderMenuTable();
     } catch (error) {
@@ -135,6 +168,19 @@ async function loadMenu() {
         setLoading(false);
     }
 }
+/*async function loadMenu() {
+    try {
+        setLoading(true);
+        const response = await fetch('/api/menu');
+        menuData = await response.json();
+        renderMenuTable();
+    } catch (error) {
+        console.error('Erreur chargement menu:', error);
+        showNotification('Erreur de chargement du menu', 'error');
+    } finally {
+        setLoading(false);
+    }
+}*/
 
 function renderMenuTable() {
     const tbody = document.getElementById('stock-list');
@@ -174,7 +220,200 @@ function renderMenuTable() {
     `).join('');
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+// -----------------------------
+// FORMULAIRE MENU (AJOUT / UPDATE)
+// -----------------------------
 async function handleMenuSubmit() {
+    const formData = {
+        nom: document.getElementById('plat-name').value.trim(),
+        prix: parseFloat(document.getElementById('plat-price').value),
+        categorie: document.getElementById('plat-category').value.trim(),
+        image: document.getElementById('plat-image').value.trim(),
+        accompagnements: document.getElementById('plat-acc').value.trim()
+            ? document.getElementById('plat-acc').value.split(',').map(a => a.trim())
+            : null
+    };
+
+    if (!formData.nom || !formData.prix || !formData.categorie || !formData.image) {
+        showNotification('Tous les champs sont requis', 'error');
+        return;
+    }
+
+    try {
+        setLoading(true);
+        let response;
+
+        if (currentEditingId) {
+            // Mise à jour
+            response = await fetch(`${API_URL}/api/menu/${currentEditingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            // Ajout
+            response = await fetch(`${API_URL}/api/menu`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+        }
+
+        if (response.ok) {
+            showNotification(currentEditingId ? 'Plat mis à jour !' : 'Plat ajouté !', 'success');
+            clearMenuForm();
+            loadMenu();
+        } else {
+            throw new Error('Erreur API');
+        }
+    } catch (error) {
+        console.error('Erreur sauvegarde:', error);
+        showNotification('Erreur lors de la sauvegarde', 'error');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// -----------------------------
+// EDIT MENU ITEM
+// -----------------------------
+function editMenuItem(id) {
+    const item = menuData.find(i => i.id === id);
+    if (!item) return;
+
+    currentEditingId = id;
+    document.getElementById('plat-name').value = item.nom;
+    document.getElementById('plat-price').value = item.prix;
+    document.getElementById('plat-category').value = item.categorie;
+    document.getElementById('plat-image').value = item.image;
+    document.getElementById('plat-acc').value = item.accompagnements ? item.accompagnements.join(', ') : '';
+
+    document.getElementById('add-menu-item').textContent = 'Mettre à jour';
+    document.getElementById('menu-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+// -----------------------------
+// DELETE MENU ITEM
+// -----------------------------
+async function deleteMenuItem(id) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce plat ?')) return;
+
+    try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/api/menu/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showNotification('Plat supprimé !', 'success');
+            loadMenu();
+        } else {
+            throw new Error('Erreur suppression');
+        }
+    } catch (error) {
+        console.error('Erreur suppression:', error);
+        showNotification('Erreur lors de la suppression', 'error');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// -----------------------------
+// TOGGLE DISPONIBILITÉ
+// -----------------------------
+async function toggleAvailability(id) {
+    const item = menuData.find(i => i.id === id);
+    if (!item) return;
+
+    try {
+        const response = await fetch(`${API_URL}/api/menu/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...item, dispo: !item.dispo })
+        });
+
+        if (response.ok) {
+            item.dispo = !item.dispo;
+            showNotification(`Plat ${item.dispo ? 'activé' : 'désactivé'}`, 'info');
+
+            // Notifier les clients
+            socket.emit('menu-changed', menuData);
+        }
+    } catch (error) {
+        console.error('Erreur toggle disponibilité:', error);
+        showNotification('Erreur lors de la mise à jour', 'error');
+    }
+}
+
+// -----------------------------
+// STATS
+// -----------------------------
+async function loadStats() {
+    try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/api/report`);
+        const stats = await response.json();
+
+        document.getElementById('total-revenue').textContent = `${stats.totalRevenue.toFixed(2)} €`;
+        document.getElementById('total-orders').textContent = stats.totalOrders;
+        document.getElementById('total-items').textContent = stats.totalItems;
+
+        renderPopularItems(stats.popularItems);
+        renderSalesChart(stats);
+
+    } catch (error) {
+        console.error('Erreur chargement stats:', error);
+        showNotification('Erreur de chargement des statistiques', 'error');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// -----------------------------
+// COMMANDES
+// -----------------------------
+async function loadOrders() {
+    try {
+        const response = await fetch(`${API_URL}/api/orders`);
+        ordersData = await response.json();
+        renderOrdersTable();
+    } catch (error) {
+        console.error('Erreur chargement commandes:', error);
+    }
+}
+
+async function deleteOrder(orderId) {
+    if (!confirm('Supprimer cette commande ?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showNotification('Commande supprimée', 'success');
+            loadOrders();
+            loadStats();
+        }
+    } catch (error) {
+        console.error('Erreur suppression commande:', error);
+        showNotification('Erreur suppression', 'error');
+    }
+}
+/*async function handleMenuSubmit() {
     const formData = {
         nom: document.getElementById('plat-name').value.trim(),
         prix: parseFloat(document.getElementById('plat-price').value),
@@ -437,7 +676,12 @@ function exportReport() {
     URL.revokeObjectURL(url);
 
     showNotification('Rapport exporté !', 'success');
-}
+}*/
+
+
+
+
+
 
 // PLAN DE SALLE
 function loadFloorPlan() {

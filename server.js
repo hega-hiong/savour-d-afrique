@@ -146,10 +146,11 @@ io.on('connection', socket => { console.log('client connected'); });
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 console.log(`Starting server on port ${PORT}...`);
-server.listen(PORT, () => console.log(`API ready on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`API ready on ${PORT}`));
+/*server.listen(PORT, () => console.log(`API ready on https://savour-backend-uhk1.onrender.com`));*/
 console.log('Server setup complete');
 
 
 
 
-
+/*server.listen(PORT, () => console.log(`API ready on http://localhost:${PORT}`));*/
