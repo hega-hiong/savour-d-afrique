@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Savourd'afrique</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <div id="login-overlay" class="overlay" style="display:flex; z-index:2000;">
+        <div class="modal" style="max-width:320px;">
+            <h3>Connexion Admin</h3>
+            <p>Rôle requis : Admin</p>
+            <div class="modal-row"><label>Rôle</label><select id="login-role"><option value="Admin">Admin</option></select></div>
+            <div class="modal-btns" style="margin-top:10px;"><button class="btn-confirm" id="btn-login">Connexion</button></div>
+        </div>
+    </div>
+
+    <aside class="sidebar">
+        <h2>Savourd'afrique</h2>
+        <nav>
+            <button onclick="showSection('stocks')">📦 Stocks</button>
+            <button onclick="showSection('ventes')">📈 Ventes</button>
+            <button onclick="showSection('salle')">🏠 Plan de salle</button>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <section id="stocks" class="admin-section">
+            <div class="section-header">
+                <h1>🍽️ Gestion du Menu</h1>
+                <div class="header-actions">
+                    <button id="add-new-item" class="btn-primary" onclick="clearMenuForm()">
+                        <span class="btn-icon">➕</span> Nouveau Plat
+                    </button>
+                    <button id="bulk-actions" class="btn-secondary">
+                        <span class="btn-icon">⚙️</span> Actions Groupées
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>📝 Ajouter/Modifier un plat</h3>
+                    <form id="menu-form" class="menu-form modern" onsubmit="return false;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="plat-name">Nom du plat *</label>
+                                <input type="text" id="plat-name" placeholder="ex: Poulet Yassa" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="plat-price">Prix (€) *</label>
+                                <input type="number" id="plat-price" step="0.01" min="0" placeholder="14.50" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="plat-category">Catégorie *</label>
+                                <select id="plat-category" required>
+                                    <option value="">Choisir une catégorie</option>
+                                    <option value="Plats">🍽️ Plats</option>
+                                    <option value="Boissons">🥤 Boissons</option>
+                                    <option value="Desserts">🍰 Desserts</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="plat-image">Image *</label>
+                                <input type="text" id="plat-image" placeholder="images/yassa.png ou URL" required>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="plat-acc">Accompagnements (optionnel)</label>
+                            <input type="text" id="plat-acc" placeholder="Riz Blanc, Frites, Alloco (séparés par des virgules)">
+                        </div>
+                        <div class="form-actions">
+                            <button id="add-menu-item" type="button" class="btn-primary">
+                                <span class="btn-icon">💾</span> Enregistrer
+                            </button>
+                            <button id="clear-menu-form" type="button" class="btn-secondary">
+                                <span class="btn-icon">🗑️</span> Effacer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>📊 Aperçu rapide</h3>
+                    <div class="menu-preview">
+                        <div class="preview-stats">
+                            <div class="preview-stat">
+                                <span class="stat-number" id="total-menu-items">0</span>
+                                <span class="stat-label">Plats actifs</span>
+                            </div>
+                            <div class="preview-stat">
+                                <span class="stat-number" id="avg-price">0€</span>
+                                <span class="stat-label">Prix moyen</span>
+                            </div>
+                            <div class="preview-stat">
+                                <span class="stat-number" id="categories-count">0</span>
+                                <span class="stat-label">Catégories</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card full-width">
+                <div class="table-header">
+                    <h3>📋 Catalogue des plats</h3>
+                    <div class="table-filters">
+                        <select id="category-filter">
+                            <option value="">Toutes les catégories</option>
+                            <option value="Plats">🍽️ Plats</option>
+                            <option value="Boissons">🥤 Boissons</option>
+                            <option value="Desserts">🍰 Desserts</option>
+                        </select>
+                        <input type="text" id="search-filter" placeholder="Rechercher un plat...">
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table modern">
+                        <thead>
+                            <tr>
+                                <th>Plat</th>
+                                <th>Prix</th>
+                                <th>Catégorie</th>
+                                <th>Accompagnements</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="ventes" class="admin-section" style="display:none;">
+            <div class="section-header">
+                <h1>📊 Analyse des Ventes</h1>
+                <div class="header-actions">
+                    <button id="refresh-sales" class="btn-primary">
+                        <span class="btn-icon">🔄</span> Actualiser
+                    </button>
+                    <button id="export-report" class="btn-secondary">
+                        <span class="btn-icon">📥</span> Exporter CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-overview">
+                <div class="stat-card primary">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <h3>Chiffre d'Affaires</h3>
+                        <p id="total-revenue" class="stat-value">0.00 €</p>
+                        <small class="stat-change positive">+12.5% ce mois</small>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-content">
+                        <h3>Total Commandes</h3>
+                        <p id="total-orders" class="stat-value">0</p>
+                        <small class="stat-change">Aujourd'hui</small>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🍽️</div>
+                    <div class="stat-content">
+                        <h3>Articles Vendus</h3>
+                        <p id="total-items" class="stat-value">0</p>
+                        <small class="stat-change">Ce soir</small>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <h3>Note Moyenne</h3>
+                        <p class="stat-value">4.8/5</p>
+                        <small class="stat-change positive">+0.2 ce mois</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>🏆 Plats les plus populaires</h3>
+                    <div id="popular-items" class="popular-items-list">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>📈 Évolution des ventes</h3>
+                    <div id="sales-chart" class="chart-container">
+                        <!-- Graphique dynamique -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card full-width">
+                <h3>📝 Historique des commandes</h3>
+                <div class="table-container">
+                    <table class="admin-table modern">
+                        <thead>
+                            <tr>
+                                <th>Table</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Date/Heure</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="salle" class="admin-section" style="display:none;">
+            <h1>Plan de Salle</h1>
+            <div class="floor-plan" id="floor-plan"></div>
+        </section>
+    </main>
+
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+:root {
+    --dark-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --text-white: #ffffff;
+    --urgent: #e74c3c;
+    --success: #27ae60;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-white);
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.cuisine-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #444;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.order-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 15px;
+    border-left: 8px solid var(--success);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Si la commande attend trop longtemps */
+.order-card.urgent {
+    border-left-color: var(--urgent);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.order-items {
+    list-style: none;
+    padding: 0;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    flex-grow: 1;
+}
+
+.order-items li {
+    padding: 5px 0;
+    border-bottom: 1px solid #444;
+}
+
+.btn-done {
+    background-color: var(--success);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+}

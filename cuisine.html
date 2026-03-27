@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuisine - Savourd'afrique</title>
+    <link rel="stylesheet" href="cuisine.css">
+</head>
+<body>
+
+    <div id="login-overlay" class="overlay" style="display:flex;">
+        <div class="modal" style="max-width:320px;">
+            <h3>Connexion Cuisine</h3>
+            <p>Sélectionnez votre rôle</p>
+            <div class="modal-row"><label>Rôle</label><select id="login-role"><option value="Cuisine">Cuisine</option></select></div>
+            <div class="modal-btns" style="margin-top:10px;"><button class="btn-confirm" id="btn-login">Connexion</button></div>
+        </div>
+    </div>
+
+    <header class="cuisine-header">
+        <h1>Commandes Cuisine</h1>
+        <div id="status-dot"></div>
+    </header>
+
+    <main id="orders-container" class="orders-grid">
+        <div class="order-card">
+            <div class="order-header">
+                <h2>TABLE 5</h2>
+                <span class="timer">02:45</span>
+            </div>
+            <ul class="order-items">
+                <li>1x Poulet Yassa</li>
+                <li>2x Jus de Bissap</li>
+            </ul>
+            <button class="btn-done">Terminé</button>
+        </div>
+    </main>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="cuisine.js"></script>
+</body>
+</html>

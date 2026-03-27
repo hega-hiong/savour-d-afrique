@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QR Codes avec SA au centre</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background:#f7f7f7; }
+    .controls { margin-bottom: 12px; }
+    .qr-container { display:flex; flex-wrap:wrap; gap:20px; }
+    .qr-item {
+      background:#fff; border:1px solid #ddd; padding:12px; width:220px; box-sizing:border-box;
+      text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);
+    }
+    .qr-canvas { display:block; margin:0 auto 8px; background:#fff; }
+    .qr-actions { display:flex; gap:8px; justify-content:center; margin-top:8px; }
+    button, a.download-link { background:#007bff; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; text-decoration:none; font-size:14px; }
+    button.secondary { background:#6c757d; }
+    @media print {
+      body * { visibility:hidden; }
+      .print-area, .print-area * { visibility:visible; }
+      .print-area { position:absolute; left:0; top:0; width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Générateur de QR Codes (SA au centre)</h1>
+
+  <div class="controls">
+    <label for="numTables">Nombre de tables :</label>
+    <input type="number" id="numTables" value="10" min="1" max="50">
+    <button id="generateBtn">Générer</button>
+    <button id="printAllBtn" class="secondary">Imprimer tout</button>
+  </div>
+
+  <div id="qrContainer" class="qr-container"></div>
+
+  <script>
+    // Configuration
+    const OUTPUT_SIZE = 300;      // taille du canvas final en px
+    const BRAND_TEXT = 'SA';      // texte au centre
+    const BRAND_BG = '#ffffff';   // couleur du rond central
+    const BRAND_FG = '#000000';   // couleur du texte SA
+    const LOGO_AS_IMAGE = false;  // true si tu veux utiliser une image logo au centre
+    const LOGO_SRC = '/images/sa-logo.png'; // chemin si LOGO_AS_IMAGE = true
+
+    // Construis l'URL du QR côté serveur (adapte si nécessaire)
+    function qrUrlForTable(i) {
+      // Exemple : endpoint qui renvoie une image PNG du QR
+      return `/api/qrcode/${i}`;
+    }
+
+    function generateQRs() {
+      const num = parseInt(document.getElementById('numTables').value, 10) || 1;
+      const container = document.getElementById('qrContainer');
+      container.innerHTML = '';
+
+      for (let i = 1; i <= num; i++) {
+        const item = document.createElement('div');
+        item.className = 'qr-item';
+
+        const title = document.createElement('h3');
+        title.textContent = `Table ${i}`;
+        item.appendChild(title);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = OUTPUT_SIZE;
+        canvas.height = OUTPUT_SIZE;
+        canvas.className = 'qr-canvas';
+        item.appendChild(canvas);
+
+        const caption = document.createElement('p');
+        caption.textContent = 'Scannez pour commander';
+        item.appendChild(caption);
+
+        const actions = document.createElement('div');
+        actions.className = 'qr-actions';
+
+        const downloadLink = document.createElement('a');
+        downloadLink.className = 'download-link';
+        downloadLink.textContent = 'Télécharger';
+        downloadLink.href = '#';
+        downloadLink.setAttribute('download', `qr-table-${i}.png`);
+
+        const printBtn = document.createElement('button');
+        printBtn.textContent = 'Imprimer';
+        printBtn.onclick = () => printCanvas(canvas);
+
+        actions.appendChild(downloadLink);
+        actions.appendChild(printBtn);
+        item.appendChild(actions);
+
+        container.appendChild(item);
+
+        // Charger l'image du QR depuis le serveur, puis dessiner et superposer SA
+        const img = new Image();
+        // si ton endpoint est sur un autre domaine et autorise CORS, décommenter :
+        // img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const ctx = canvas.getContext('2d');
+          // fond blanc
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0,0,OUTPUT_SIZE,OUTPUT_SIZE);
+          // dessiner l'image du QR en la centrant / redimensionnant
+          // on suppose que l'image serveur est carrée ; on l'étire pour OUTPUT_SIZE
+          ctx.drawImage(img, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
+          // dessiner un rond blanc au centre pour le logo
+          const cx = OUTPUT_SIZE / 2;
+          const cy = OUTPUT_SIZE / 2;
+          const radius = OUTPUT_SIZE * 0.14; // ajuste la taille du rond central
+          ctx.beginPath();
+          ctx.fillStyle = BRAND_BG;
+          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (LOGO_AS_IMAGE) {
+            // dessiner une image logo au centre
+            const logo = new Image();
+            logo.crossOrigin = 'anonymous';
+            logo.onload = () => {
+              const logoSize = radius * 2 * 0.95;
+              ctx.drawImage(logo, cx - logoSize/2, cy - logoSize/2, logoSize, logoSize);
+              downloadLink.href = canvas.toDataURL('image/png');
+            };
+            logo.onerror = () => {
+              // fallback texte si image non trouvée
+              drawBrandText(ctx, cx, cy, radius);
+              downloadLink.href = canvas.toDataURL('image/png');
+            };
+            logo.src = LOGO_SRC;
+          } else {
+            // dessiner le texte SA
+            drawBrandText(ctx, cx, cy, radius);
+            downloadLink.href = canvas.toDataURL('image/png');
+          }
+        };
+
+        img.onerror = () => {
+          // si l'image serveur ne répond pas, afficher message et générer un QR client fallback
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0,0,OUTPUT_SIZE,OUTPUT_SIZE);
+          ctx.fillStyle = '#000';
+          ctx.font = '16px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('QR non disponible', OUTPUT_SIZE/2, OUTPUT_SIZE/2);
+          downloadLink.href = canvas.toDataURL('image/png');
+        };
+
+        img.src = qrUrlForTable(i);
+      }
+    }
+
+    function drawBrandText(ctx, cx, cy, radius) {
+      ctx.fillStyle = BRAND_FG;
+      const fontSize = Math.floor(radius * 1.1);
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(BRAND_TEXT, cx, cy);
+    }
+
+    // Imprimer un canvas seul
+    function printCanvas(canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
+      const w = window.open('', '_blank');
+      w.document.write(`<html><head><title>Imprimer QR</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${dataUrl}" style="width:350px;height:350px;"></body></html>`);
+      w.document.close();
+      w.focus();
+      w.print();
+    }
+
+    // Imprimer tous les QR
+    function printAll() {
+      const container = document.getElementById('qrContainer');
+      const canvases = container.querySelectorAll('canvas');
+      const w = window.open('', '_blank');
+      w.document.write('<html><head><title>Imprimer QR Codes</title><style>body{font-family:Arial,sans-serif;} .qr{display:inline-block;margin:10px;text-align:center;}</style></head><body>');
+      canvases.forEach((c, idx) => {
+        const data = c.toDataURL('image/png');
+        w.document.write(`<div class="qr"><h4>Table ${idx+1}</h4><img src="${data}" style="width:260px;height:260px;"></div>`);
+      });
+      w.document.write('</body></html>');
+      w.document.close();
+      w.focus();
+      w.print();
+    }
+
+    // Événements
+    document.getElementById('generateBtn').addEventListener('click', generateQRs);
+    document.getElementById('printAllBtn').addEventListener('click', printAll);
+
+    // Générer par défaut
+    generateQRs();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+<!--<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de QR Codes - Savour d'Afrique</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .qr-container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .qr-item { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        img { max-width: 150px; }
+    </style>
+</head>
+<body>
+    <h1>Générateur de QR Codes pour les Tables</h1>
+    <p>Entrez le nombre de tables et cliquez sur "Générer" pour créer les QR codes.</p>
+    <label for="numTables">Nombre de tables :</label>
+    <input type="number" id="numTables" value="10" min="1" max="50">
+    <button onclick="generateQRs()">Générer</button>
+    <div id="qrContainer" class="qr-container"></div>
+
+    <script>
+        function generateQRs() {
+            const numTables = document.getElementById('numTables').value;
+            const container = document.getElementById('qrContainer');
+            container.innerHTML = '';
+            for (let i = 1; i <= numTables; i++) {
+                const div = document.createElement('div');
+                div.className = 'qr-item';
+                div.innerHTML = `
+                    <h3>Table ${i}</h3>
+                    <img src="/api/qrcode/${i}" alt="QR Code Table ${i}">
+                    <p>Scannez pour commander</p>
+                `;
+                container.appendChild(div);
+            }
+        }
+        // Générer par défaut
+        generateQRs();
+    </script>
+</body>
+</html>-->

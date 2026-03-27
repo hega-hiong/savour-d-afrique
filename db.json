@@ -1,0 +1,107 @@
+{
+  "menu": [
+    {
+      "nom": "poulet",
+      "prix": 15,
+      "categorie": "Plats",
+      "image": "images/yassa.png",
+      "accompagnements": [
+        "riz"
+      ],
+      "id": "Nap3QJNROmsitQtckr1RG"
+    },
+    {
+      "nom": "ndolé",
+      "prix": 16,
+      "categorie": "Desserts",
+      "image": "images/yassa.png",
+      "accompagnements": [
+        "frites"
+      ],
+      "id": "Z2VViKPKhl9OQYuJ1m6SW"
+    },
+    {
+      "nom": "chico",
+      "prix": 30,
+      "categorie": "Plats",
+      "image": "images/yassa.png",
+      "accompagnements": [
+        "simple"
+      ],
+      "id": "ZIUIddzLQKEQfLYGdtIND"
+    },
+    {
+      "nom": "booster",
+      "prix": 10,
+      "categorie": "Boissons",
+      "image": "images/logo.png",
+      "accompagnements": null,
+      "id": "29h_pHw72dp0A1B4-LpUE"
+    }
+  ],
+  "orders": [
+    {
+      "table": "8",
+      "items": [
+        "1x poulet",
+        "1x ndolé",
+        "1x chico"
+      ],
+      "subtotal": 61,
+      "status": "Nouveau",
+      "timestamp": 1774609462644,
+      "id": "OdcxrlHPx70aDLAFwXJ_H"
+    },
+    {
+      "table": "8",
+      "items": [
+        "1x poulet",
+        "3x chico"
+      ],
+      "subtotal": 105,
+      "status": "Nouveau",
+      "timestamp": 1774609390935,
+      "id": "cqe9Q5VqZh89l3_KkVowJ"
+    },
+    {
+      "table": "2",
+      "items": [
+        "1x poulet"
+      ],
+      "subtotal": 15,
+      "status": "Terminé",
+      "timestamp": 1774469879125,
+      "id": "IOzXCA2D51OkRueYFP5ZZ"
+    },
+    {
+      "table": "1",
+      "items": [
+        "2x poulet"
+      ],
+      "subtotal": 30,
+      "status": "Terminé",
+      "timestamp": 1774408738858,
+      "id": "E_5EqtgS8ZZV_zR0uTbg4"
+    },
+    {
+      "table": "Inconnue",
+      "items": [
+        "2x poulet"
+      ],
+      "subtotal": 30,
+      "status": "Terminé",
+      "timestamp": 1774407886077,
+      "id": "Q_VPDGXYPevveAZ5vJqrX"
+    },
+    {
+      "table": "5",
+      "items": [
+        "1x Poulet Yassa"
+      ],
+      "subtotal": 14.5,
+      "status": "Terminé",
+      "timestamp": 1774404964097,
+      "id": "HlsO1UpfFYn1_-a0RxVvf"
+    }
+  ]
+}
